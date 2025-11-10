@@ -5,18 +5,12 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace CashCourses
 {
-    public class Player : MonoBehaviour
+    public class Player : Entity
     {
-        private Rigidbody2D rb;
-        private Animator animator;
+        [Header("Move Info")]
         [SerializeField]private float moveSpeed = 5;
         private float xVelocity;
         [SerializeField]private float yValue = 5;
-        private bool faceRight = true;
-        [Header("Jump Info")]
-        [SerializeField]private float groundDistance;
-        private bool isGround = true;
-        [SerializeField] private LayerMask WhatIsGround;
 
         [Header("Dash Info")] [SerializeField] private float dashDuration;
         private float dashTimer;
@@ -31,14 +25,14 @@ namespace CashCourses
         [SerializeField] private int attackCount = 0;
         
         // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+        protected override void Start()
         {
-            rb = GetComponent<Rigidbody2D>();
-            animator = GetComponentInChildren<Animator>();
+            base.Start();
         }
         // Update is called once per frame
-        void Update()
+        protected override void Update()
         {
+            base.Update();
             Movement();
             CheckInput();
             CheckFlip();
@@ -46,14 +40,8 @@ namespace CashCourses
             CollisionCheck();
         }
         
-        /// <summary>
-        /// check whether the player is on the ground
-        /// the isGround is to confine whether the play can jump or not.
-        /// </summary>
-        private void CollisionCheck()
-        {
-            isGround = Physics2D.Raycast(transform.position, Vector2.down, groundDistance, WhatIsGround);
-        }
+        
+
 
         private void AnimatorController()
         {
@@ -64,7 +52,6 @@ namespace CashCourses
             animator.SetBool("isAttacking",isAttacking);
             animator.SetInteger("attackCount",attackCount);
         }
-
         private void CheckInput()
         {
             dashTimer -= Time.deltaTime;
@@ -82,7 +69,6 @@ namespace CashCourses
                 AttackAccessibility();
             }
         }
-
         private void AttackAccessibility()
         {
             if (!isGround || isAttacking)
@@ -98,7 +84,6 @@ namespace CashCourses
             isAttacking = true;
             comboTimer = comboDuration;
         }
-
         private void DashAccessibility()
         {
             if (dashCooldownTimer < 0)
@@ -107,19 +92,16 @@ namespace CashCourses
                 dashCooldownTimer = dashCooldown;
             }
         }
-
-
         private void Movement()
         {
             if (isAttacking)
             {
                 rb.linearVelocity = Vector2.zero;
             }else if (dashTimer > 0)
-                rb.linearVelocity = new Vector2(xVelocity * dashSpeed, 0);
+                rb.linearVelocity = new Vector2(faceDir * dashSpeed, 0);
             else
                 rb.linearVelocity = new Vector2(xVelocity*moveSpeed, rb.linearVelocityY);
         }
-
         public void SetAttackingOver()
         {
             isAttacking = false;
@@ -131,24 +113,12 @@ namespace CashCourses
                 rb.linearVelocity = new Vector2(rb.linearVelocityX, yValue);
             }
         }
-
-        private void Flip()
-        {
-            faceRight = !faceRight;
-            transform.Rotate(Vector3.up,180);
-        }
-
         private void CheckFlip()
         {
             if(rb.linearVelocityX>0 && !faceRight)
                 Flip();
             else if(rb.linearVelocityX<0 && faceRight)
                 Flip();
-        }
-
-        private void OnDrawGizmos()
-        {
-            Gizmos.DrawLine(transform.position, new Vector3(transform.position.x, transform.position.y - groundDistance));
         }
     }
 }
